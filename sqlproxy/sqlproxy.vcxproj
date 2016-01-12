@@ -148,7 +148,7 @@
   <ItemGroup>
     <ClCompile Include="proxy_server.cpp" />
     <ClCompile Include="proxy_session.cpp" />
-    <ClCompile Include="sqlproxy.cpp">
+    <ClCompile Include="main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

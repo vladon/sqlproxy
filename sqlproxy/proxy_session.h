@@ -4,10 +4,10 @@
 
 #include <boost/asio.hpp>
 
-class session : public std::enable_shared_from_this<session>
+class proxy_session : public std::enable_shared_from_this<proxy_session>
 {
 public:
-    explicit session(boost::asio::ip::tcp::socket socket);
+    explicit proxy_session(boost::asio::ip::tcp::socket socket);
     void start();
 
 private:
