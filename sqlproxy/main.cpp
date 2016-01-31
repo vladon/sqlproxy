@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -5,20 +7,22 @@
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 
+#include "proxy_bridge.h"
 #include "proxy_server.h"
 
 int main(int argc, char ** argv)
 {
     namespace po = boost::program_options;
+    using namespace sql_proxy;
 
-    proxy_server_config_t proxy_server_config{};
+    proxy_server_config_t config{};
 
     po::options_description desc("Options");
     desc.add_options()
-        ("bind-host,h", po::value<host_t>(&proxy_server_config.bind_host)->default_value("0.0.0.0"), "bind host")
-        ("bind-port,p", po::value<port_t>(&proxy_server_config.bind_port)->default_value(3306), "bind port")
-        ("remote-host,r", po::value<host_t>(&proxy_server_config.remote_host)->required(), "remote host")
-        ("remote-port,s", po::value<port_t>(&proxy_server_config.remote_port)->default_value(3306), "remote port")
+        ("bind-host,h", po::value<host_t>(&config.local_ip_addr)->default_value("0.0.0.0"), "bind IP")
+        ("bind-port,p", po::value<port_t>(&config.local_port)->default_value(3306), "bind port")
+        ("remote-host,r", po::value<host_t>(&config.upstream_ip_addr)->required(), "remote IP")
+        ("remote-port,s", po::value<port_t>(&config.upstream_port)->default_value(3306), "remote port")
         ("help,h", "this help message");
 
     po::variables_map opts;
@@ -41,8 +45,27 @@ int main(int argc, char ** argv)
         return 0;
     }
 
-    proxy_server my_proxy{ proxy_server_config };
-    my_proxy.run();
+    boost::asio::io_service ios;
+
+    try
+    {
+        std::cout << "Starting sql_proxy: "
+            << config.local_ip_addr << ":" << config.local_port
+            << " -> "
+            << config.upstream_ip_addr << ":" << config.upstream_port
+            << "\n\nPress Ctrl+Break to abort"
+            << std::endl;
+
+        proxy_server my_proxy{ ios, config };
+        my_proxy.accept_connections();
+
+        ios.run();
+    }
+    catch (const std::exception & ex)
+    {
+        std::cerr << "Exception: " << ex.what() << std::endl;
+        return 1;
+    }
 
     return 0;
 }

@@ -1,67 +1,55 @@
-﻿#include "proxy_server.h"
+﻿#include "stdafx.h"
 
-#include <csignal>
+#include "proxy_server.h"
+
 #include <iostream>
 
-#include "proxy_session.h"
+namespace sql_proxy
+{
 
-using boost::asio::ip::tcp;
-using boost::asio::ip::address;
-
-proxy_server::proxy_server(const proxy_server_config_t & proxy_server_config)
+proxy_server::proxy_server(boost::asio::io_service& io_service, const proxy_server_config_t config)
     :
-    io_service_(),
-    acceptor_(io_service_),
-    socket_(io_service_),
-    signals_(io_service_)
+    io_service_(io_service),
+    acceptor_(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(config.local_ip_addr), config.local_port)),
+    upstream_endpoint_(boost::asio::ip::address::from_string(config.upstream_ip_addr), config.upstream_port)
 {
-    signals_.add(SIGABRT);
-    signals_.add(SIGINT);
-    signals_.add(SIGTERM);
-    signals_.add(SIGBREAK);
-#if defined(SIGQUIT)
-    signals_.add(SIGQUIT);
-#endif
-    do_await_stop();
-
-    tcp::resolver resolver{ io_service_ };
-    tcp::endpoint endpoint = *resolver.resolve({ proxy_server_config.bind_host, std::to_string(proxy_server_config.bind_port) });
-    acceptor_.open(endpoint.protocol());
-    acceptor_.set_option(tcp::acceptor::reuse_address(true));
-    acceptor_.bind(endpoint);
-    acceptor_.listen();
-
-    do_accept();
 }
 
-void proxy_server::run()
+bool proxy_server::accept_connections()
 {
-    io_service_.run();
-}
-
-void proxy_server::do_accept()
-{
-    acceptor_.async_accept(socket_, [this](boost::system::error_code ec)
+    try
     {
-        if (!ec)
+        session_ = std::make_shared<proxy_session>(io_service_);
+        acceptor_.async_accept(
+            session_->downstream_socket(),
+            [this](const boost::system::error_code error_code)
         {
-            std::make_shared<proxy_session>(std::move(socket_))->start();
-        }
+            handle_accept(error_code);
+        });
+    }
+    catch (const std::exception & ex)
+    {
+        std::cerr << "Proxy Server exception: " << ex.what() << std::endl;
+        return false;
+    }
 
-        do_accept();
-    });
+    return true;
 }
 
-void proxy_server::do_await_stop()
+void proxy_server::handle_accept(const boost::system::error_code error)
 {
-    signals_.async_wait([this](boost::system::error_code ec, int signo)
+    if (!error)
     {
-        if (ec)
+        session_->start(upstream_endpoint_);
+        if (!accept_connections())
         {
-            std::cout << "Boost ec: " << ec.message() << std::endl;
+            std::cerr << "Failure during call to accept." << std::endl;
         }
-        std::cout << "Signal: " << signo << std::endl;
-        acceptor_.close();
-        io_service_.stop();
-    });
+    }
+    else
+    {
+        std::cerr << "Error: " << error.message() << std::endl;
+    }
+}
+
 }

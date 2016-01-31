@@ -1,37 +1,27 @@
 ﻿#pragma once
 
-#include <cstdint>
-#include <memory>
-#include <string>
-
 #include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
 
-using host_t = std::string;
-using port_t = uint16_t;
+#include "common.h"
+#include "proxy_bridge.h"
 
-struct proxy_server_config_t
+namespace sql_proxy
 {
-    host_t bind_host;
-    port_t bind_port;
-    host_t remote_host;
-    port_t remote_port;
-};
 
 class proxy_server
 {
 public:
-    explicit proxy_server(const proxy_server_config_t & proxy);
-    ~proxy_server() = default;
+    proxy_server(boost::asio::io_service & io_service, const proxy_server_config_t config);
 
-    void run();
+    bool accept_connections();
 
 private:
-    boost::asio::io_service io_service_;
-    boost::asio::ip::tcp::acceptor acceptor_;
-    boost::asio::ip::tcp::socket socket_;
-    boost::asio::signal_set signals_;
+    void handle_accept(const boost::system::error_code error);
 
-    void do_accept();
-    void do_await_stop();
+    boost::asio::io_service & io_service_;
+    boost::asio::ip::tcp::acceptor acceptor_;
+    std::shared_ptr<proxy_session> session_;
+    boost::asio::ip::tcp::endpoint upstream_endpoint_;
 };
+
+}

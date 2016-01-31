@@ -15,21 +15,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="proxy_server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="proxy_session.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy_bridge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="proxy_server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="proxy_session.h">
+    <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
