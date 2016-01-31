@@ -7,8 +7,8 @@
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 
-#include "proxy_bridge.h"
-#include "proxy_server.h"
+#include "basic_proxy_session.h"
+#include "basic_proxy_server.h"
 
 int main(int argc, char ** argv)
 {
@@ -56,7 +56,7 @@ int main(int argc, char ** argv)
             << "\n\nPress Ctrl+Break to abort"
             << std::endl;
 
-        proxy_server my_proxy{ ios, config };
+        basic_proxy_server my_proxy{ ios, config };
         my_proxy.accept_connections();
 
         ios.run();

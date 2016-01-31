@@ -3,15 +3,16 @@
 #include <boost/asio.hpp>
 
 #include "common.h"
-#include "proxy_bridge.h"
+#include "basic_proxy_session.h"
 
 namespace sql_proxy
 {
 
-class proxy_server
+class basic_proxy_server
 {
 public:
-    proxy_server(boost::asio::io_service & io_service, const proxy_server_config_t config);
+    basic_proxy_server(boost::asio::io_service & io_service, const proxy_server_config_t config);
+    virtual ~basic_proxy_server() = default;
 
     bool accept_connections();
 
@@ -20,7 +21,7 @@ private:
 
     boost::asio::io_service & io_service_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    std::shared_ptr<proxy_session> session_;
+    std::shared_ptr<basic_proxy_session> session_;
     boost::asio::ip::tcp::endpoint upstream_endpoint_;
 };
 

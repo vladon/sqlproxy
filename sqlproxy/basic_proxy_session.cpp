@@ -1,6 +1,6 @@
 ﻿#include "stdafx.h"
 
-#include "proxy_bridge.h"
+#include "basic_proxy_session.h"
 
 #include <csignal>
 #include <iostream>
@@ -8,7 +8,7 @@
 namespace sql_proxy
 {
 
-proxy_session::proxy_session(boost::asio::io_service& io_service)
+basic_proxy_session::basic_proxy_session(boost::asio::io_service& io_service)
     :
     io_service_(io_service),
     downstream_socket_(io_service),
@@ -16,17 +16,17 @@ proxy_session::proxy_session(boost::asio::io_service& io_service)
 {
 }
 
-proxy_session::socket_t& proxy_session::downstream_socket()
+basic_proxy_session::socket_t& basic_proxy_session::downstream_socket()
 {
     return downstream_socket_;
 }
 
-proxy_session::socket_t& proxy_session::upstream_socket()
+basic_proxy_session::socket_t& basic_proxy_session::upstream_socket()
 {
     return upstream_socket_;
 }
 
-void proxy_session::start(const boost::asio::ip::tcp::endpoint & upstream_endpoint)
+void basic_proxy_session::start(const boost::asio::ip::tcp::endpoint & upstream_endpoint)
 {
     auto self(shared_from_this());
     upstream_socket_.async_connect(
@@ -37,7 +37,7 @@ void proxy_session::start(const boost::asio::ip::tcp::endpoint & upstream_endpoi
     });
 }
 
-void proxy_session::handle_upstream_connect(const boost::system::error_code error)
+void basic_proxy_session::handle_upstream_connect(const boost::system::error_code error)
 {
     if (!error)
     {
@@ -69,7 +69,7 @@ void proxy_session::handle_upstream_connect(const boost::system::error_code erro
     }
 }
 
-void proxy_session::handle_downstream_write(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
+void basic_proxy_session::handle_downstream_write(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
     if (!t_error_code)
     {
@@ -88,7 +88,7 @@ void proxy_session::handle_downstream_write(const boost::system::error_code t_er
     }
 }
 
-void proxy_session::handle_downstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
+void basic_proxy_session::handle_downstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
     if (!t_error_code)
     {
@@ -107,7 +107,7 @@ void proxy_session::handle_downstream_read(const boost::system::error_code t_err
     }
 }
 
-void proxy_session::handle_upstream_write(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
+void basic_proxy_session::handle_upstream_write(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
     if (!t_error_code)
     {
@@ -126,7 +126,7 @@ void proxy_session::handle_upstream_write(const boost::system::error_code t_erro
     }
 }
 
-void proxy_session::handle_upstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
+void basic_proxy_session::handle_upstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
     if (!t_error_code)
     {
@@ -145,7 +145,7 @@ void proxy_session::handle_upstream_read(const boost::system::error_code t_error
     }
 }
 
-void proxy_session::close()
+void basic_proxy_session::close()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     

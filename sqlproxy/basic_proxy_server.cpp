@@ -1,13 +1,13 @@
 ﻿#include "stdafx.h"
 
-#include "proxy_server.h"
+#include "basic_proxy_server.h"
 
 #include <iostream>
 
 namespace sql_proxy
 {
 
-proxy_server::proxy_server(boost::asio::io_service& io_service, const proxy_server_config_t config)
+basic_proxy_server::basic_proxy_server(boost::asio::io_service& io_service, const proxy_server_config_t config)
     :
     io_service_(io_service),
     acceptor_(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(config.local_ip_addr), config.local_port)),
@@ -15,11 +15,11 @@ proxy_server::proxy_server(boost::asio::io_service& io_service, const proxy_serv
 {
 }
 
-bool proxy_server::accept_connections()
+bool basic_proxy_server::accept_connections()
 {
     try
     {
-        session_ = std::make_shared<proxy_session>(io_service_);
+        session_ = std::make_shared<basic_proxy_session>(io_service_);
         acceptor_.async_accept(
             session_->downstream_socket(),
             [this](const boost::system::error_code error_code)
@@ -36,7 +36,7 @@ bool proxy_server::accept_connections()
     return true;
 }
 
-void proxy_server::handle_accept(const boost::system::error_code error)
+void basic_proxy_server::handle_accept(const boost::system::error_code error)
 {
     if (!error)
     {

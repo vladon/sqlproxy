@@ -14,12 +14,13 @@
 namespace sql_proxy
 {
 
-class proxy_session : public std::enable_shared_from_this<proxy_session>
+class basic_proxy_session : public std::enable_shared_from_this<basic_proxy_session>
 {
 public:
     using socket_t = boost::asio::ip::tcp::socket;
 
-    explicit proxy_session(boost::asio::io_service & io_service);
+    explicit basic_proxy_session(boost::asio::io_service & io_service);
+    virtual ~basic_proxy_session() = default;
     
     socket_t & downstream_socket();
     socket_t & upstream_socket();
