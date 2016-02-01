@@ -23,3 +23,4 @@
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/program_options.hpp>
+#include <boost/thread.hpp>

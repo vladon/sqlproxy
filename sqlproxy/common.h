@@ -9,6 +9,30 @@ namespace sql_proxy
 using host_t = std::string;
 using port_t = uint16_t;
 
+using byte_t = uint8_t;
+using bytes_t = std::vector<byte_t>;
+
+inline std::string to_hex_string(byte_t byte)
+{
+    std::string result{ "00" };
+
+    auto to_hex = [](byte_t b) -> char
+    {
+        if (b >= 0 && b <= 9)
+        {
+            return '0' + b;
+        }
+        else
+        {
+            return 'A' + (b - 0x0A);
+        }
+    };
+
+    result[0] = to_hex(byte / 0x10);
+    result[1] = to_hex(byte % 0x10);
+    return result;
+}
+
 struct proxy_server_config_t
 {
     host_t local_ip_addr;
@@ -18,5 +42,33 @@ struct proxy_server_config_t
 };
 
 constexpr size_t max_data_length = 8 * 1024; // 8 KiB
+
+// error handler
+
+class IErrorHandler
+{
+public:
+    virtual ~IErrorHandler() = 0;
+};
+
+inline IErrorHandler::~IErrorHandler()
+{
+}
+
+// data monitor
+class IProvider
+{
+public:
+    virtual void on_connect() const = 0;
+    virtual void on_downstream_read(bytes_t data) = 0;
+    virtual void on_upstream_read(bytes_t data) = 0;
+
+    virtual ~IProvider() = 0;
+};
+
+inline IProvider::~IProvider()
+{
+}
+
 
 }

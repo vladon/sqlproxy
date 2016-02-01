@@ -19,7 +19,7 @@ class basic_proxy_session : public std::enable_shared_from_this<basic_proxy_sess
 public:
     using socket_t = boost::asio::ip::tcp::socket;
 
-    explicit basic_proxy_session(boost::asio::io_service & io_service);
+    basic_proxy_session(boost::asio::io_service & io_service, std::shared_ptr<IProvider> provider);
     virtual ~basic_proxy_session() = default;
     
     socket_t & downstream_socket();
@@ -48,6 +48,8 @@ private:
 
     std::array<uint8_t, max_data_length> downstream_data_;
     std::array<uint8_t, max_data_length> upstream_data_;
+
+    std::shared_ptr<IProvider> provider_;
 };
 
 }

@@ -5,14 +5,17 @@
 #include <csignal>
 #include <iostream>
 
+#include "logger.h"
+
 namespace sql_proxy
 {
 
-basic_proxy_session::basic_proxy_session(boost::asio::io_service& io_service)
+basic_proxy_session::basic_proxy_session(boost::asio::io_service& io_service, std::shared_ptr<IProvider> provider)
     :
     io_service_(io_service),
     downstream_socket_(io_service),
-    upstream_socket_(io_service)
+    upstream_socket_(io_service),
+    provider_(provider)
 {
 }
 
@@ -45,6 +48,7 @@ void basic_proxy_session::handle_upstream_connect(const boost::system::error_cod
             auto self(shared_from_this());
             upstream_socket_.async_read_some(
                 boost::asio::buffer(upstream_data_),
+                
                 [this, self](const boost::system::error_code error_code,
                              const size_t bytes_transferred)
             {
@@ -92,6 +96,7 @@ void basic_proxy_session::handle_downstream_read(const boost::system::error_code
 {
     if (!t_error_code)
     {
+        provider_->on_downstream_read(bytes_t(downstream_data_.data(), downstream_data_.data() + t_bytes_transferred));
         auto self(shared_from_this());
         boost::asio::async_write(
             upstream_socket_,
@@ -128,8 +133,10 @@ void basic_proxy_session::handle_upstream_write(const boost::system::error_code 
 
 void basic_proxy_session::handle_upstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
+    auto tm = t_error_code.message();
     if (!t_error_code)
     {
+        provider_->on_upstream_read(bytes_t(downstream_data_.data(), downstream_data_.data() + t_bytes_transferred));
         auto self(shared_from_this());
         boost::asio::async_write(
             downstream_socket_,

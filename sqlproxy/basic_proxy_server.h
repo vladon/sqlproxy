@@ -11,7 +11,7 @@ namespace sql_proxy
 class basic_proxy_server
 {
 public:
-    basic_proxy_server(boost::asio::io_service & io_service, const proxy_server_config_t config);
+    basic_proxy_server(boost::asio::io_service & io_service, const proxy_server_config_t & config);
     virtual ~basic_proxy_server() = default;
 
     bool accept_connections();
