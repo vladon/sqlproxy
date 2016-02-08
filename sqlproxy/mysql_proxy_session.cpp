@@ -1,6 +1,6 @@
 ﻿#include "stdafx.h"
 
-#include "basic_proxy_session.h"
+#include "mysql_proxy_session.h"
 
 #include <csignal>
 #include <iostream>
@@ -8,7 +8,7 @@
 namespace sql_proxy
 {
 
-basic_proxy_session::basic_proxy_session(boost::asio::io_service& io_service, std::shared_ptr<IProvider> provider)
+mysql_proxy_session::mysql_proxy_session(boost::asio::io_service& io_service, std::shared_ptr<IProvider> provider)
     :
     io_service_(io_service),
     downstream_socket_(io_service),
@@ -17,17 +17,17 @@ basic_proxy_session::basic_proxy_session(boost::asio::io_service& io_service, st
 {
 }
 
-basic_proxy_session::socket_t& basic_proxy_session::downstream_socket()
+mysql_proxy_session::socket_t& mysql_proxy_session::downstream_socket()
 {
     return downstream_socket_;
 }
 
-basic_proxy_session::socket_t& basic_proxy_session::upstream_socket()
+mysql_proxy_session::socket_t& mysql_proxy_session::upstream_socket()
 {
     return upstream_socket_;
 }
 
-void basic_proxy_session::start(const boost::asio::ip::tcp::endpoint & upstream_endpoint)
+void mysql_proxy_session::start(const boost::asio::ip::tcp::endpoint & upstream_endpoint)
 {
     auto self(shared_from_this());
     upstream_socket_.async_connect(
@@ -38,32 +38,47 @@ void basic_proxy_session::start(const boost::asio::ip::tcp::endpoint & upstream_
     });
 }
 
-void basic_proxy_session::handle_upstream_connect(const boost::system::error_code error)
+void mysql_proxy_session::handle_upstream_connect(const boost::system::error_code error)
 {
     if (!error)
     {
+        boost::asio::spawn(io_service_, [&](boost::asio::yield_context yield)
         {
-            auto self(shared_from_this());
-            upstream_socket_.async_read_some(
-                boost::asio::buffer(upstream_data_),
-                
-                [this, self](const boost::system::error_code error_code,
-                             const size_t bytes_transferred)
             {
-                shared_from_this()->handle_upstream_read(error_code, bytes_transferred);
-            });
-        }
+                boost::system::error_code ec;
 
-        {
-            auto self(shared_from_this());
-            downstream_socket_.async_read_some(
-                boost::asio::buffer(downstream_data_),
-                [this, self](const boost::system::error_code error_code,
-                       const size_t bytes_transferred)
+                auto self(shared_from_this());
+
+                boost::asio::async_read(upstream_socket_,
+                                        boost::asio::buffer(upstream_data_),
+                                        boost::asio::transfer_exactly(sizeof(mysql_header)),
+                                        yield[ec]);
+                auto header = reinterpret_cast<mysql_header *>(upstream_data_.data());
+                boost::asio::async_read(upstream_socket_,
+                                        boost::asio::buffer(upstream_data_.data() + sizeof(mysql_header), header->get_payload_length()),
+                                        boost::asio::transfer_exactly(header->get_payload_length()),
+                                        yield[ec]);
+                
+                upstream_socket_.async_read_some(
+                    boost::asio::buffer(upstream_data_),
+                    [this, self](const boost::system::error_code error_code,
+                                 const size_t bytes_transferred)
+                {
+                    shared_from_this()->handle_upstream_read(error_code, bytes_transferred);
+                });
+            }
+
             {
-                shared_from_this()->handle_downstream_read(error_code, bytes_transferred);
-            });
-        }
+                auto self(shared_from_this());
+                downstream_socket_.async_read_some(
+                    boost::asio::buffer(downstream_data_),
+                    [this, self](const boost::system::error_code error_code,
+                                 const size_t bytes_transferred)
+                {
+                    shared_from_this()->handle_downstream_read(error_code, bytes_transferred);
+                });
+            }
+        });
     }
     else
     {
@@ -71,7 +86,7 @@ void basic_proxy_session::handle_upstream_connect(const boost::system::error_cod
     }
 }
 
-void basic_proxy_session::handle_downstream_write(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
+void mysql_proxy_session::handle_downstream_write(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
     if (!t_error_code)
     {
@@ -90,7 +105,7 @@ void basic_proxy_session::handle_downstream_write(const boost::system::error_cod
     }
 }
 
-void basic_proxy_session::handle_downstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
+void mysql_proxy_session::handle_downstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
     if (!t_error_code)
     {
@@ -110,7 +125,7 @@ void basic_proxy_session::handle_downstream_read(const boost::system::error_code
     }
 }
 
-void basic_proxy_session::handle_upstream_write(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
+void mysql_proxy_session::handle_upstream_write(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
     if (!t_error_code)
     {
@@ -129,7 +144,7 @@ void basic_proxy_session::handle_upstream_write(const boost::system::error_code 
     }
 }
 
-void basic_proxy_session::handle_upstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
+void mysql_proxy_session::handle_upstream_read(const boost::system::error_code t_error_code, const size_t t_bytes_transferred)
 {
     auto tm = t_error_code.message();
     if (!t_error_code)
@@ -150,7 +165,7 @@ void basic_proxy_session::handle_upstream_read(const boost::system::error_code t
     }
 }
 
-void basic_proxy_session::close()
+void mysql_proxy_session::close()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     

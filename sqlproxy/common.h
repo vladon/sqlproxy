@@ -20,7 +20,7 @@ inline std::string to_hex_string(byte_t byte)
 
     auto to_hex = [](byte_t b) -> char
     {
-        if (b >= 0 && b <= 9)
+        if (b <= 9)
         {
             return '0' + b;
         }
@@ -90,5 +90,25 @@ inline IProvider::~IProvider()
 {
 }
 
+// mysql common
+#pragma pack(push, 1)
+struct mysql_header
+{
+    uint8_t payload_length_00;
+    uint8_t payload_length_01;
+    uint8_t payload_length_02;
+    uint8_t sequence_id;
+
+    size_t get_payload_length() const
+    {
+        return payload_length_00 + payload_length_01 * 0x100 + payload_length_02 * 0x10000;
+    }
+
+    uint8_t get_sequence_id() const
+    {
+        return sequence_id;
+    }
+};
+#pragma pack(pop)
 
 }

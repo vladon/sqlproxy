@@ -1,6 +1,6 @@
 ﻿#include "stdafx.h"
 
-#include "basic_proxy_server.h"
+#include "mysql_proxy_server.h"
 
 #include <iostream>
 #include "mysql_monitor.h"
@@ -8,7 +8,7 @@
 namespace sql_proxy
 {
 
-basic_proxy_server::basic_proxy_server(boost::asio::io_service& io_service, 
+mysql_proxy_server::mysql_proxy_server(boost::asio::io_service& io_service, 
                                        const proxy_server_config_t & config)
     :
     io_service_(io_service),
@@ -17,11 +17,11 @@ basic_proxy_server::basic_proxy_server(boost::asio::io_service& io_service,
 {
 }
 
-bool basic_proxy_server::accept_connections()
+bool mysql_proxy_server::accept_connections()
 {
     try
     {
-        session_ = std::make_shared<basic_proxy_session>(io_service_, std::make_shared<mysql_monitor>(io_service_));
+        session_ = std::make_shared<mysql_proxy_session>(io_service_, std::make_shared<mysql_monitor>(io_service_));
         acceptor_.async_accept(
             session_->downstream_socket(),
             [this](const boost::system::error_code error_code)
@@ -38,7 +38,7 @@ bool basic_proxy_server::accept_connections()
     return true;
 }
 
-void basic_proxy_server::handle_accept(const boost::system::error_code error)
+void mysql_proxy_server::handle_accept(const boost::system::error_code error)
 {
     if (!error)
     {

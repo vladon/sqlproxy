@@ -8,8 +8,8 @@
 #include <boost/program_options.hpp>
 #include <boost/thread.hpp>
 
-#include "basic_proxy_session.h"
-#include "basic_proxy_server.h"
+#include "mysql_proxy_session.h"
+#include "mysql_proxy_server.h"
 #include "mysql_monitor.h"
 
 int main(int argc, char ** argv)
@@ -60,7 +60,7 @@ int main(int argc, char ** argv)
             << "\n\nPress Ctrl+Break to abort\n"
             << std::endl;
 
-        basic_proxy_server my_proxy{ ios, config };
+        mysql_proxy_server my_proxy{ ios, config };
         my_proxy.accept_connections();
 
         boost::thread_group thread_pool{};

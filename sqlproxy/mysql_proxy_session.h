@@ -14,13 +14,13 @@
 namespace sql_proxy
 {
 
-class basic_proxy_session : public std::enable_shared_from_this<basic_proxy_session>
+class mysql_proxy_session : public std::enable_shared_from_this<mysql_proxy_session>
 {
 public:
     using socket_t = boost::asio::ip::tcp::socket;
 
-    basic_proxy_session(boost::asio::io_service & io_service, std::shared_ptr<IProvider> provider);
-    virtual ~basic_proxy_session() = default;
+    mysql_proxy_session(boost::asio::io_service & io_service, std::shared_ptr<IProvider> provider);
+    virtual ~mysql_proxy_session() = default;
     
     socket_t & downstream_socket();
     socket_t & upstream_socket();
@@ -46,8 +46,8 @@ private:
 
     std::mutex mutex_;
 
-    std::array<uint8_t, max_data_length> downstream_data_;
-    std::array<uint8_t, max_data_length> upstream_data_;
+    std::array<uint8_t, max_data_length> downstream_data_{};
+    std::array<uint8_t, max_data_length> upstream_data_{};
 
     std::shared_ptr<IProvider> provider_;
 };

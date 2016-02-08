@@ -16,6 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <string>
 #include <vector>
 
@@ -24,3 +25,4 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/program_options.hpp>
 #include <boost/thread.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
