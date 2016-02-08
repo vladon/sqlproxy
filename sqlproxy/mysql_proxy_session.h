@@ -29,6 +29,38 @@ public:
     void handle_upstream_connect(const boost::system::error_code error_code);
 
 private:
+    using data_t = std::array<uint8_t, max_data_length>;
+    using read_handler_t = std::function<void(const boost::system::error_code, const size_t)>;
+
+    void co_read(socket_t & socket, data_t & data, read_handler_t read_handler)
+    {
+        auto self(shared_from_this());
+        boost::asio::spawn(io_service_,
+                           [this, self, &socket, &data, read_handler](boost::asio::yield_context yield)
+        {
+            boost::system::error_code ec;
+
+            boost::asio::async_read(socket,
+                                    boost::asio::buffer(data),
+                                    boost::asio::transfer_exactly(sizeof(mysql_packet_header)),
+                                    yield[ec]);
+
+            if (!ec)
+            {
+                auto header = reinterpret_cast<mysql_packet_header *>(data.data());
+                auto payload_length = header->get_payload_length();
+                auto bytes_transferred =
+                    sizeof(mysql_packet_header) +
+                    boost::asio::async_read(
+                        socket,
+                        boost::asio::buffer(data.data() + sizeof(mysql_packet_header), payload_length),
+                        boost::asio::transfer_exactly(payload_length),
+                        yield[ec]);
+                read_handler(ec, bytes_transferred);
+            }
+        });
+    }
+
     void handle_downstream_write(const boost::system::error_code error_code,
                                 const size_t bytes_transferred);
     void handle_downstream_read(const boost::system::error_code error_code,
@@ -46,8 +78,8 @@ private:
 
     std::mutex mutex_;
 
-    std::array<uint8_t, max_data_length> downstream_data_{};
-    std::array<uint8_t, max_data_length> upstream_data_{};
+    data_t downstream_data_{};
+    data_t upstream_data_{};
 
     std::shared_ptr<IProvider> provider_;
 };

@@ -92,7 +92,7 @@ inline IProvider::~IProvider()
 
 // mysql common
 #pragma pack(push, 1)
-struct mysql_header
+struct mysql_packet_header
 {
     uint8_t payload_length_00;
     uint8_t payload_length_01;
@@ -110,5 +110,26 @@ struct mysql_header
     }
 };
 #pragma pack(pop)
+
+enum class mysql_session_phase
+{
+    unknown,
+    connection_phase,
+    command_phase
+};
+
+enum class mysql_connection_phase_step
+{
+    unknown,
+    initial_handshake,
+    handshake_response
+};
+
+enum class packet_origin
+{
+    downstream,
+    upstream
+};
+
 
 }
