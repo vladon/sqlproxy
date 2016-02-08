@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24627.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlproxy", "sqlproxy\sqlproxy.vcxproj", "{A4453488-CC22-4CCB-8112-8D63A0AAD1A1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlproxy_unittest", "sqlproxy_unittest\sqlproxy_unittest.vcxproj", "{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,14 @@ Global
 		{A4453488-CC22-4CCB-8112-8D63A0AAD1A1}.Release|x64.Build.0 = Release|x64
 		{A4453488-CC22-4CCB-8112-8D63A0AAD1A1}.Release|x86.ActiveCfg = Release|Win32
 		{A4453488-CC22-4CCB-8112-8D63A0AAD1A1}.Release|x86.Build.0 = Release|Win32
+		{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}.Debug|x64.ActiveCfg = Debug|x64
+		{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}.Debug|x64.Build.0 = Debug|x64
+		{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}.Debug|x86.ActiveCfg = Debug|Win32
+		{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}.Debug|x86.Build.0 = Debug|Win32
+		{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}.Release|x64.ActiveCfg = Release|x64
+		{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}.Release|x64.Build.0 = Release|x64
+		{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}.Release|x86.ActiveCfg = Release|Win32
+		{802FAAEF-AA04-4106-9BEC-7F5FE6B49208}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

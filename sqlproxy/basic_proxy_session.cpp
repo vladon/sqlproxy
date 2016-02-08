@@ -5,8 +5,6 @@
 #include <csignal>
 #include <iostream>
 
-#include "logger.h"
-
 namespace sql_proxy
 {
 
@@ -136,7 +134,7 @@ void basic_proxy_session::handle_upstream_read(const boost::system::error_code t
     auto tm = t_error_code.message();
     if (!t_error_code)
     {
-        provider_->on_upstream_read(bytes_t(downstream_data_.data(), downstream_data_.data() + t_bytes_transferred));
+        provider_->on_upstream_read(bytes_t(upstream_data_.data(), upstream_data_.data() + t_bytes_transferred));
         auto self(shared_from_this());
         boost::asio::async_write(
             downstream_socket_,

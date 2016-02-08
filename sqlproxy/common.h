@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#include "tools.h"
+
 namespace sql_proxy
 {
 
@@ -30,6 +32,24 @@ inline std::string to_hex_string(byte_t byte)
 
     result[0] = to_hex(byte / 0x10);
     result[1] = to_hex(byte % 0x10);
+    return result;
+}
+
+template <typename T>
+inline std::string to_hex_string(T value)
+{
+    std::string result;
+    result.reserve(sizeof(value) * 2);
+
+    value = host_to_network_order(value);
+
+    auto value_as_bytes = reinterpret_cast<uint8_t *>(&value);
+
+    for (size_t i = 0; i < sizeof(value); ++i)
+    {
+        result += to_hex_string(value_as_bytes[i]);
+    }
+
     return result;
 }
 

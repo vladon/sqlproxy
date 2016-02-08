@@ -24,7 +24,8 @@ mysql_packet_header parse_mysql_packet_header(const std::vector<byte_t> & packet
 
 mysql_monitor::mysql_monitor(boost::asio::io_service& io_service)
     :
-    io_service_(io_service)
+    io_service_(io_service),
+    strand_(io_service)
 {
 }
 
@@ -46,86 +47,93 @@ void mysql_monitor::on_upstream_read(bytes_t data)
     on_read(data, read_direction::upstream);
 }
 
-void mysql_monitor::on_read(bytes_t & data, read_direction direction)
+void mysql_monitor::dump_data(const bytes_t & data, read_direction direction)
 {
-    std::lock_guard<std::mutex> cout_lock(cout_mutex_);
+    static constexpr size_t half_row_size = std::size_t{ 8 };
+    static constexpr size_t row_size = half_row_size * 2;
 
-    bytes_t * packet{};
-    read_phase * phase{};
-    mysql_packet_header * header{};
-    auto dir_str = "";
+    std::string out;
+    out.reserve((data.size() / row_size + 10) * 80);
 
     switch (direction)
     {
         case read_direction::downstream:
-            packet = &downstream_packet_;
-            phase = &downstream_read_phase_;
-            header = &downstream_packet_header_;
-            dir_str = "downstream";
+            out += "Direction: downstream (client -> server)\n";
             break;
-
         case read_direction::upstream:
-            packet = &upstream_packet_;
-            phase = &upstream_read_phase_;
-            header = &upstream_packet_header_;
-            dir_str = "upstream";
+            out += "Direction: upstream (server -> client)\n";
             break;
     }
 
-    if (packet && phase && header)
+    out += "Packet size: " + std::to_string(data.size()) + "\n\n";
+
+    uint16_t counter = 0;
+
+    size_t i = 0;
+    while (i < data.size())
     {
-        if (*phase == read_phase::waiting)
-        {
-            std::cout << "new data (" << dir_str << "), size: " << data.size() << std::endl;
+        auto v_size = std::min(i + row_size, data.size());
+        std::vector<byte_t> row{ data.cbegin() + i, data.cbegin() + v_size };
 
-            packet->clear();
-            *phase = read_phase::started;
+        out += to_hex_string(counter) + "  ";
+
+        for (size_t row_i = 0; row_i < row_size; ++row_i)
+        {
+            if (row_i < row.size())
+            {
+                out += to_hex_string(row[row_i]) + std::string(" ");
+            }
+            else
+            {
+                out += "   ";
+            }
+
+            if (row_i == half_row_size - 1)
+            {
+                out += " ";
+            }
         }
 
-        if (*phase == read_phase::started)
+        out += ' ';
+
+        auto to_printable = [](const byte_t b) -> char
         {
-            std::cout << "packet->size() = " << packet->size() << std::endl;
-            std::cout << "appending " << data.size() << " bytes\n";
-            packet->insert(packet->end(), data.begin(), data.end());
-            std::cout << "packet->size() = " << packet->size() << std::endl;
-
-            if (!header->filled)
+            if (b > 32 && b < 127)
             {
-                *header = parse_mysql_packet_header(*packet);
+                return b;
             }
-
-            if (header->filled)
+            else
             {
-                {
-                    std::cout << "payload_length = " << header->payload_length << std::endl;
-                    std::cout << "sequence_id = " << std::to_string(header->sequence_id) << std::endl;
-                }
-
-                packet->reserve(mysql_packet_header_size + header->payload_length);
+                return '.';
             }
+        };
 
-            if (packet->size() >= mysql_packet_header_size + header->payload_length)
+        for (size_t row_i = 0; row_i < row.size(); ++row_i)
+        {
+            out += to_printable(row[row_i]);
+
+            if (row_i == half_row_size - 1)
             {
-                auto data_size = data.size();
-                std::cout << "packet received, size: " << data_size << std::endl;
-
-                std::string hexdata;
-                for (auto b : *packet)
-                {
-                    hexdata += to_hex_string(b);
-                }
-
-                std::cout << hexdata << "\n---\n" << std::endl;
-
-                *phase = read_phase::waiting;
-                header->filled = false;
-                header->payload_length = 0;
-                header->sequence_id = 0;
-                std::fill(packet->begin(), packet->end(), 0);
-                packet->resize(0);
+                out += ' ';
             }
         }
+
+        out += '\n';
+
+        i += row_size;
+        counter += row_size;
     }
+
+    strand_.post([out, this]()
+    {
+        std::lock_guard<std::mutex> lock_cout(cout_mutex_);
+        std::cout << out << "\n---\n" << std::endl;
+    });
+}
+
+void mysql_monitor::on_read(bytes_t & data, read_direction direction)
+{
+    dump_data(data, direction);
 }
 
 }

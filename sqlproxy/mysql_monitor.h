@@ -34,7 +34,10 @@ public:
     void on_upstream_read(bytes_t data) override;
 
 private:
+    void dump_data(const bytes_t & data, read_direction direction);
+
     boost::asio::io_service & io_service_;
+    boost::asio::io_service::strand strand_;
 
     void on_read(bytes_t & data, read_direction direction);
 
