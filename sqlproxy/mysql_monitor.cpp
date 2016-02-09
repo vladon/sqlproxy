@@ -48,6 +48,7 @@ void mysql_monitor::dump_data(const bytes_t & data, packet_origin direction)
 
         out += mysql_parser_.parse_packet(data, direction);
 
+        out += "\n=== DUMP BEGIN ===\n";
         switch (direction)
         {
             case packet_origin::downstream:
@@ -117,15 +118,21 @@ void mysql_monitor::dump_data(const bytes_t & data, packet_origin direction)
             counter += row_size;
         }
 
-        out += "---\n";
+        out += "=== DUMP END ===\n\n---\n";
 
-        //        std::lock_guard<std::mutex> lock_cout(cout_mutex_);
-        std::cout << out;
+        {
+            std::lock_guard<std::mutex> lock_cout(cout_mutex_);
+            std::cout << out;
+        }
     });
 }
 
 void mysql_monitor::on_read(const bytes_t & data, packet_origin direction)
 {
+    //strand_.post([this](){
+    //    std::lock_guard<std::mutex> lock_cout(cout_mutex_);
+    //    std::cout << "!!!!!!!!!! on_read" << std::endl;
+    //});
     dump_data(data, direction);
 }
 

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <type_traits>
 
 #include "tools.h"
 
@@ -130,6 +131,86 @@ enum class packet_origin
     downstream,
     upstream
 };
+
+enum class mysql_protocol_version : uint8_t
+{
+    protocol_handshake_v9 = 0x09,
+    protocol_handshake_v10 = 0x0a,
+    protocol_unknown
+};
+
+template <typename EnumClassType>
+constexpr auto to_underlying_type(EnumClassType value)
+{
+    return static_cast<std::underlying_type<mysql_protocol_version>::type>(value);
+}
+
+#pragma pack(push,1)
+union capability_flags_t
+{
+    uint32_t capability_flags;
+    struct
+    {
+        uint8_t cap_flags_00;
+        uint8_t cap_flags_01;
+        uint8_t cap_flags_02;
+        uint8_t cap_flags_03;
+    };
+    uint32_t operator()() const
+    {
+        return capability_flags;
+    }
+};
+#pragma pack(pop)
+
+using mysql_status_flags_t = uint16_t;
+namespace mysql_status_flags
+{
+constexpr mysql_status_flags_t server_status_in_trans = 0x0001;
+constexpr mysql_status_flags_t server_status_autocommit = 0x0002;
+constexpr mysql_status_flags_t server_more_results_exists = 0x0008;
+constexpr mysql_status_flags_t server_status_no_good_index_used = 0x0010;
+constexpr mysql_status_flags_t server_status_no_index_used = 0x0020;
+constexpr mysql_status_flags_t server_status_cursor_exists = 0x0040;
+constexpr mysql_status_flags_t server_status_last_row_sent = 0x0080;
+constexpr mysql_status_flags_t server_status_db_dropped = 0x0100;
+constexpr mysql_status_flags_t server_status_no_backslash_escapes = 0x0200;
+constexpr mysql_status_flags_t server_status_metadata_changed = 0x0400;
+constexpr mysql_status_flags_t server_query_was_slow = 0x0800;
+constexpr mysql_status_flags_t server_ps_out_params = 0x1000;
+constexpr mysql_status_flags_t server_status_in_trans_readonly = 0x2000;
+constexpr mysql_status_flags_t server_session_state_changed = 0x4000;
+}
+
+using mysql_capability_flags_t = uint32_t;
+namespace mysql_capability_flags
+{
+constexpr mysql_capability_flags_t client_long_password = 0x0000'0001;
+constexpr mysql_capability_flags_t client_found_rows = 0x0000'0002;
+constexpr mysql_capability_flags_t client_long_flag = 0x0000'0004;
+constexpr mysql_capability_flags_t client_connect_with_db = 0x0000'0008;
+constexpr mysql_capability_flags_t client_no_schema = 0x0000'0010;
+constexpr mysql_capability_flags_t client_compress = 0x0000'0020;
+constexpr mysql_capability_flags_t client_odbc = 0x0000'0040;
+constexpr mysql_capability_flags_t client_local_files = 0x0000'0080;
+constexpr mysql_capability_flags_t client_ignore_space = 0x0000'0100;
+constexpr mysql_capability_flags_t client_protocol_41 = 0x0000'0200;
+constexpr mysql_capability_flags_t client_interactive = 0x0000'0400;
+constexpr mysql_capability_flags_t client_ssl = 0x0000'0800;
+constexpr mysql_capability_flags_t client_ignore_sigpipe = 0x0000'1000;
+constexpr mysql_capability_flags_t client_transactions = 0x0000'2000;
+constexpr mysql_capability_flags_t client_reserved = 0x0000'4000;
+constexpr mysql_capability_flags_t client_secure_connection = 0x0000'8000;
+constexpr mysql_capability_flags_t client_multi_statements = 0x0001'0000;
+constexpr mysql_capability_flags_t client_multi_results = 0x0002'0000;
+constexpr mysql_capability_flags_t client_ps_multi_results = 0x0004'0000;
+constexpr mysql_capability_flags_t client_plugin_auth = 0x0008'0000;
+constexpr mysql_capability_flags_t client_connect_attrs = 0x0010'0000;
+constexpr mysql_capability_flags_t client_plugin_auth_lenenc_client_data = 0x0020'0000;
+constexpr mysql_capability_flags_t client_can_handle_expired_passwords = 0x0040'0000;
+constexpr mysql_capability_flags_t client_session_track = 0x0080'0000;
+constexpr mysql_capability_flags_t client_deprecate_eof = 0x0100'0000;
+}
 
 
 }

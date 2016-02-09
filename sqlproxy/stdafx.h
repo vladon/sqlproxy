@@ -18,6 +18,7 @@
 #include <mutex>
 #include <queue>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 // Boost
